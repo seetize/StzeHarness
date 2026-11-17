@@ -1,0 +1,36 @@
+{
+  "name": "stze-harness",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Русскоязычная фабрика специализированных ИИ-агентов",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"tsx watch server/index.ts\" \"vite\"",
+    "build": "tsc -b && vite build",
+    "start": "tsx server/index.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "express": "latest",
+    "lucide-react": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "vite": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/express": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "concurrently": "latest",
+    "tsx": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}
