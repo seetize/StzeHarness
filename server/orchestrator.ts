@@ -61,6 +61,33 @@ export async function runFactory(source: FactoryState, goal: string): Promise<Fa
   return state
 }
 
+const simulatedReplies: Record<string, (text: string) => string> = {
+  lead: (text) => `Принял сообщение: «${text}». Сверю его с текущим маршрутом и подключу нужную специализацию.`,
+  architect: () => 'Смотрю на это из архитектурной зоны: уточню границы, контракты и риск, затем передам Инженеру.',
+  engineer: () => 'Смотрю на это из зоны реализации: сформирую минимальный проверяемый инкремент и команды проверки.',
+  reviewer: () => 'Смотрю на это из зоны качества: проверю критерии, доказательства и возможный блокер выпуска.',
+}
+
+export async function teamMessage(source: FactoryState, text: string): Promise<FactoryState> {
+  const state = structuredClone(source)
+  addMessage(state, 'human', text)
+  const lower = text.toLocaleLowerCase('ru-RU')
+  const mentioned = state.agents.filter((agent) =>
+    lower.includes(`@${agent.name.toLocaleLowerCase('ru-RU')}`) || lower.includes(`@${agent.id}`),
+  )
+  const targets = mentioned.length ? mentioned : state.agents.filter((agent) => agent.id === 'lead')
+  for (const agent of targets) {
+    if (modelMode() === 'live') {
+      try { addMessage(state, agent.id, await complete(agent, text)) }
+      catch (error) { addMessage(state, 'system', `${agent.name}: ${error instanceof Error ? error.message : 'ошибка модели'}`) }
+    } else {
+      addMessage(state, agent.id, simulatedReplies[agent.id]?.(text) ?? 'Принял. Отвечу из своей зоны ответственности.')
+    }
+  }
+  state.activity.unshift({ id: uid(), text: `Сообщение направлено: ${targets.map((a) => a.name).join(', ')}`, createdAt: now(), tone: 'neutral' })
+  return state
+}
+
 export function resolveDecision(source: FactoryState, id: string, action: 'approve' | 'reject'): FactoryState {
   const state = structuredClone(source)
   const decision = state.decisions.find((item) => item.id === id)

@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { z } from 'zod'
 import { getState, resetState, setState } from './store.js'
-import { resolveDecision, runFactory } from './orchestrator.js'
+import { resolveDecision, runFactory, teamMessage } from './orchestrator.js'
 import type { Agent } from '../src/types.js'
 
 const app = express()
@@ -24,9 +24,7 @@ app.post('/api/run', async (req, res) => {
 app.post('/api/messages', async (req, res) => {
   const parsed = z.object({ text: z.string().trim().min(1).max(2000) }).safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: 'Сообщение пустое или слишком длинное' })
-  const state = structuredClone(await getState())
-  state.messages.push({ id: crypto.randomUUID(), agentId: 'human', room: 'team', text: parsed.data.text, createdAt: new Date().toISOString() })
-  res.json(await setState(state))
+  res.json(await setState(await teamMessage(await getState(), parsed.data.text)))
 })
 
 app.post('/api/decisions/:id', async (req, res) => {
